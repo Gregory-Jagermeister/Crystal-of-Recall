@@ -8,6 +8,7 @@ import eu.pb4.polymer.core.api.item.PolymerItem;
 import eu.pb4.polymer.resourcepack.api.PolymerModelData;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
 import net.fabricmc.example.Exceptions.DragonDefeatedException;
+import net.fabricmc.example.Exceptions.NoBedSpawnSetException;
 import net.fabricmc.example.Exceptions.RespawnAnchorSetException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
@@ -54,7 +55,8 @@ public class crystalItem extends ToolItem implements PolymerItem {
         return false;
     }
 
-    public BlockPos getOverworldSpawn(ServerPlayerEntity player) throws RespawnAnchorSetException {
+    public BlockPos getOverworldSpawn(ServerPlayerEntity player)
+            throws RespawnAnchorSetException, NoBedSpawnSetException {
 
         BlockPos spawnPos = player.getSpawnPointPosition();
         RegistryKey<World> spawnDimensionId = player.getSpawnPointDimension();
@@ -68,7 +70,7 @@ public class crystalItem extends ToolItem implements PolymerItem {
             return spawnPos;
         }
 
-        return null;
+        throw new NoBedSpawnSetException("These is no place to call home for you! (set your spawn at a bed.)");
 
     }
 
@@ -109,14 +111,14 @@ public class crystalItem extends ToolItem implements PolymerItem {
                     world.playSound(null, player.getBlockPos(), SoundEvents.BLOCK_AMETHYST_BLOCK_BREAK,
                             SoundCategory.AMBIENT);
                 }
-            } catch (DragonDefeatedException | RespawnAnchorSetException e) {
-                user.sendMessage(Text.of(e.getMessage()), true);
+            } catch (DragonDefeatedException | RespawnAnchorSetException | NoBedSpawnSetException e) {
+                user.sendMessage(Text.literal(e.getMessage()).formatted(Formatting.RED), true);
                 sWorld.spawnParticles(ParticleTypes.SMOKE, (double) user.getX(),
                         (double) user.getY() + 0.25, (double) user.getZ(), 100, 0.5, 0.5, 0.5, 0.1);
                 // Handle teleportation failure (e.g., play a sound, add particle effects, etc.)
                 world.playSound(null, player.getBlockPos(), SoundEvents.BLOCK_GLASS_BREAK, SoundCategory.AMBIENT);
             } catch (Exception e) {
-                user.sendMessage(Text.of("Warp Failed"), true);
+                user.sendMessage(Text.literal("Warp Failed").formatted(Formatting.RED), true);
                 sWorld.spawnParticles(ParticleTypes.SMOKE, (double) user.getX(),
                         (double) user.getY() + 0.25, (double) user.getZ(), 100, 0.5, 0.5, 0.5, 0.1);
                 world.playSound(null, player.getBlockPos(), SoundEvents.BLOCK_GLASS_BREAK,
@@ -124,7 +126,7 @@ public class crystalItem extends ToolItem implements PolymerItem {
             }
         } else {
             ServerPlayerEntity player = (ServerPlayerEntity) user;
-            user.sendMessage(Text.of("Warp Failed"), true);
+            user.sendMessage(Text.literal("Warp Failed").formatted(Formatting.RED), true);
             sWorld.spawnParticles(ParticleTypes.SMOKE, (double) user.getX(),
                     (double) user.getY() + 0.25, (double) user.getZ(), 100, 0.5, 0.5, 0.5, 0.1);
             world.playSound(null, player.getBlockPos(), SoundEvents.BLOCK_GLASS_BREAK,
@@ -145,7 +147,7 @@ public class crystalItem extends ToolItem implements PolymerItem {
                 Text.translatable("Right click to teleport back")
                         .formatted(Formatting.DARK_GRAY));
         tooltip.add(
-                Text.translatable("to your bed or respawn anchor")
+                Text.translatable("to your bed.")
                         .formatted(Formatting.DARK_GRAY));
         tooltip.add(
                 Text.translatable("")
