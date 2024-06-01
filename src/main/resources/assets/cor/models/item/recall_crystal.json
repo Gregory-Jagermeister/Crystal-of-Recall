@@ -1,0 +1,42 @@
+{
+    "parent": "minecraft:item/handheld",
+    "textures": {
+        "layer0": "cor:item/recall_crystal"
+    },
+    "display": {
+        "thirdperson_righthand": {
+            "rotation": [
+                0,
+                90,
+                32
+            ],
+            "translation": [
+                -0.25,
+                3.25,
+                1.5
+            ],
+            "scale": [
+                0.5,
+                0.5,
+                0.5
+            ]
+        },
+        "thirdperson_lefthand": {
+            "rotation": [
+                0,
+                -90,
+                -32
+            ],
+            "translation": [
+                0.25,
+                3.25,
+                1.5
+            ],
+            "scale": [
+                0.5,
+                0.5,
+                0.5
+            ]
+        }
+    }
+}
