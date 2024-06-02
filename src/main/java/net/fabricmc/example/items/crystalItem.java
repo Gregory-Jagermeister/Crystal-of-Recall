@@ -173,11 +173,6 @@ public class crystalItem extends ToolItem implements PolymerItem {
     }
 
     @Override
-    public boolean isDamageable() {
-        return true;
-    }
-
-    @Override
     public boolean isItemBarVisible(ItemStack stack) {
         return true;
     }

@@ -12,8 +12,8 @@ import net.minecraft.server.network.ServerPlayerEntity;
 
 public class TestAxeItem extends AxeItem implements PolymerItem {
 
-    public TestAxeItem(ToolMaterial material, float attackDamage, float attackSpeed, Settings settings) {
-        super(material, attackDamage, attackSpeed, settings);
+    public TestAxeItem(ToolMaterial material, Settings settings) {
+        super(material, settings);
         // TODO Auto-generated constructor stub
     }
 

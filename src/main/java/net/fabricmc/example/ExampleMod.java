@@ -5,8 +5,8 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.example.items.CrystalMaterial;
 import net.fabricmc.example.items.TestAxeItem;
 import net.fabricmc.example.items.crystalItem;
-import net.fabricmc.fabric.api.item.v1.FabricItemSettings;
 import net.minecraft.item.AxeItem;
+import net.minecraft.item.Item;
 import net.minecraft.item.Items;
 import net.minecraft.item.ToolItem;
 import net.minecraft.registry.Registries;
@@ -19,10 +19,10 @@ public class ExampleMod implements ModInitializer {
 	// That way, it's clear which mod wrote info, warnings, and errors.
 
 	public static ToolItem ITEM = new crystalItem(Items.WOODEN_HOE, CrystalMaterial.INSTANCE,
-			new FabricItemSettings());
+			new Item.Settings());
 
-	public static AxeItem axeItem = new TestAxeItem(CrystalMaterial.INSTANCE, 0, 0,
-			new FabricItemSettings().fireproof().rarity(Rarity.RARE));
+	public static AxeItem axeItem = new TestAxeItem(CrystalMaterial.INSTANCE,
+			new Item.Settings().fireproof().rarity(Rarity.RARE));
 
 	@Override
 	public void onInitialize() {
