@@ -1,3 +1,5 @@
 {
-    "item.cor.recall_crystal": "Crystal of Recall"
+    "item.cor.recall_crystal": "Crystal of Recall",
+    "item.cor.recall_upgrade": "Recall Crystal Upgrade Template",
+    "block.cor.crystal_anchor": "Recall Anchor"
 }

@@ -1,0 +1,26 @@
+{
+    "type": "minecraft:crafting_shaped",
+    "pattern": [
+        "gQg",
+        "AEA",
+        "gQg"
+    ],
+    "key": {
+        "g": {
+            "item": "minecraft:diamond"
+        },
+        "A": {
+            "item": "minecraft:gold_ingot"
+        },
+        "E": {
+            "item": "minecraft:amethyst_shard"
+        },
+        "Q": {
+            "item": "minecraft:stone"
+        }
+    },
+    "result": {
+        "id": "cor:crystal_anchor",
+        "count": 1
+    }
+}

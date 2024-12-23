@@ -4,8 +4,6 @@ import net.minecraft.block.Block;
 import net.minecraft.item.Items;
 import net.minecraft.item.ToolMaterial;
 import net.minecraft.recipe.Ingredient;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.Registry;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.Identifier;

@@ -35,7 +35,11 @@ dependencies {
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
 	modImplementation include("eu.pb4:polymer-core:0.8.2+1.20.6")
+	modImplementation include("eu.pb4:polymer-blocks:0.8.2+1.20.6")
 	modImplementation include("eu.pb4:polymer-resource-pack:0.8.2+1.20.6")
+	modImplementation include("eu.pb4:polymer-virtual-entity:0.8.2+1.20.6")
+	modImplementation include("eu.pb4:factorytools:0.2.2+1.20.6")
+	modImplementation include("eu.pb4:sgui:1.5.1+1.20.5")
 }
 
 processResources {
