@@ -1,56 +1,56 @@
 package net.fabricmc.example.items;
 
-import java.util.List;
-
-import org.jetbrains.annotations.Nullable;
-
 import eu.pb4.polymer.core.api.item.PolymerItem;
 import eu.pb4.polymer.resourcepack.api.PolymerModelData;
 import eu.pb4.polymer.resourcepack.api.PolymerResourcePackUtils;
+import eu.pb4.sgui.api.ClickType;
+import eu.pb4.sgui.api.elements.GuiElementBuilder;
+import eu.pb4.sgui.api.elements.GuiElementInterface;
+import eu.pb4.sgui.api.gui.SimpleGui;
 import net.fabricmc.example.Exceptions.DragonDefeatedException;
 import net.fabricmc.example.Exceptions.NoBedSpawnSetException;
 import net.fabricmc.example.Exceptions.RespawnAnchorSetException;
 import net.minecraft.entity.Entity;
 import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.item.ItemUsageContext;
-import net.minecraft.item.ToolItem;
-import net.minecraft.item.ToolMaterial;
+import net.minecraft.item.*;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.registry.RegistryKey;
+import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.screen.slot.SlotActionType;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.sound.SoundCategory;
 import net.minecraft.sound.SoundEvents;
 import net.minecraft.stat.Stats;
 import net.minecraft.text.Text;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Formatting;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.TypedActionResult;
+import net.minecraft.util.*;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 
-public class crystalItem extends ToolItem implements PolymerItem {
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+public class ReinforcedCrystalItem extends ToolItem implements PolymerItem {
 
     private final PolymerModelData model;
 
-    public crystalItem(Item polymerItem, ToolMaterial toolMaterial, Settings settings) {
+    public ReinforcedCrystalItem(Item polymerItem, ToolMaterial toolMaterial, Settings settings) {
         super(toolMaterial, settings);
         this.model = PolymerResourcePackUtils.requestModel(polymerItem, Identifier.of("cor", "item/recall_crystal"));
     }
 
     @Override
     public ActionResult useOnBlock(ItemUsageContext context) {
+
         return ActionResult.PASS;
     }
 
     public boolean isDragonDefeated(ServerWorld world) throws DragonDefeatedException {
         // Check if the Ender Dragon has been defeated
         if (world.getEnderDragonFight() != null && !(world.getEnderDragonFight().hasPreviouslyKilled())) {
-            throw new DragonDefeatedException("The Energy wafting off the Ender Dragon interuptted your Warp.");
+            throw new DragonDefeatedException("The Energy wafting off the Ender Dragon interrupted your Warp.");
         }
         return false;
     }
@@ -92,18 +92,22 @@ public class crystalItem extends ToolItem implements PolymerItem {
                 overworldSpawn = getOverworldSpawn(player);
 
                 if (overworldSpawn != null && player.isOnGround()) {
+
+                    BlockPos test = new BlockPos(0, 200, 0);
+                    List<BlockPos> anchorPoints = new ArrayList<BlockPos>(){{add(test);}};
                     ServerWorld overworld = player.getServer().getWorld(World.OVERWORLD);
 
                     itemStack.setDamage(10);
                     sWorld.spawnParticles(ParticleTypes.GLOW, (double) user.getX(),
                             (double) user.getY() + 0.25, (double) user.getZ(), 100, 0.5, 0.5, 0.5, 0.1);
 
-                    if (overworld != null && player.getWorld() != overworld) {
-                        player.teleport(overworld, overworldSpawn.getX(), overworldSpawn.getY(), overworldSpawn.getZ(),
-                                player.getYaw(), player.getPitch());
-                    } else {
-                        player.requestTeleport(overworldSpawn.getX(), overworldSpawn.getY(), overworldSpawn.getZ());
-                    }
+//                    if (overworld != null && player.getWorld() != overworld) {
+//                        player.teleport(overworld, overworldSpawn.getX(), overworldSpawn.getY(), overworldSpawn.getZ(),
+//                                player.getYaw(), player.getPitch());
+//                    } else {
+//                        player.requestTeleport(overworldSpawn.getX(), overworldSpawn.getY(), overworldSpawn.getZ());
+//                    }
+                    openAnchorSelectorGui((ServerPlayerEntity)user, anchorPoints);
                     player.getItemCooldownManager().set(this, 200);
                     player.incrementStat(Stats.USED.getOrCreateStat(this));
                     sWorld.spawnParticles(ParticleTypes.GLOW, (double) user.getX(),
@@ -159,14 +163,65 @@ public class crystalItem extends ToolItem implements PolymerItem {
         return true;
     }
 
+    public void openAnchorSelectorGui(ServerPlayerEntity player, List<BlockPos> anchorPoints) {
+        SimpleGui gui = new SimpleGui(ScreenHandlerType.GENERIC_9X3, player, false) {
+            @Override
+            public boolean onClick(int index, ClickType type, SlotActionType action, GuiElementInterface element) {
+                // Handle what happens when a slot is clicked, like teleporting, etc.
+                player.sendMessage(Text.literal("You clicked slot: " + index), false);
+
+                return super.onClick(index, type, action, element);
+            }
+
+            @Override
+            public boolean canPlayerClose() {
+                return true; // Players can close the GUI
+            }
+        };
+
+        gui.setTitle(Text.literal("Select Anchor"));
+
+        // Populate the GUI with anchor entries
+        for (int i = 0; i < anchorPoints.size(); i++) {
+            BlockPos anchor = anchorPoints.get(i);
+            gui.setSlot(i, new GuiElementBuilder(Items.ENDER_PEARL)
+                    .setName(Text.literal("Anchor " + (i + 1)))
+                    .setCallback((index, clickType, actionType) -> teleportToAnchor(player, anchor))
+            );
+        }
+
+        // Optional Slot for Respawn Point
+        gui.setSlot(anchorPoints.size(), new GuiElementBuilder(Items.ENDER_EYE)
+                .setName(Text.literal("Respawn Point"))
+                .setCallback((index, clickType, actionType) -> teleportToRespawn(player))
+        );
+
+        gui.open();
+    }
+
+    private void teleportToAnchor(ServerPlayerEntity player, BlockPos anchor) {
+        ServerWorld overworld = Objects.requireNonNull(player.getServer()).getWorld(World.OVERWORLD);
+        player.requestTeleport(anchor.getX(), anchor.getY(), anchor.getZ());
+        player.closeHandledScreen();
+        System.out.println("Would Teleport");
+    }
+
+    private void teleportToRespawn(ServerPlayerEntity player) {
+        //ServerWorld overworld = player.getServer().getWorld(World.OVERWORLD);
+        BlockPos respawnPoint = player.getSpawnPointPosition();
+        if (respawnPoint != null) {
+            player.requestTeleport(respawnPoint.getX(), respawnPoint.getY(), respawnPoint.getZ());
+        }
+        player.closeHandledScreen();
+    }
+
     @Override
     public void inventoryTick(ItemStack stack, World world, Entity entity, int slot, boolean selected) {
         if (world.isClient) {
             return;
         }
 
-        if (entity instanceof PlayerEntity) {
-            PlayerEntity playerEntity = (PlayerEntity) entity;
+        if (entity instanceof PlayerEntity playerEntity) {
             float cooldown = playerEntity.getItemCooldownManager().getCooldownProgress(stack.getItem(), 0.0f);
             stack.setDamage((int) (cooldown * 10));
         }

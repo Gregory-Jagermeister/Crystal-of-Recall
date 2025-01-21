@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.6-SNAPSHOT'
+	id 'fabric-loom' version '1.9-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -34,12 +34,12 @@ dependencies {
 
 	// modImplementation "net.fabricmc.fabric-api:fabric-api-deprecated:${project.fabric_version}"
 
-	modImplementation include("eu.pb4:polymer-core:0.8.2+1.20.6")
-	modImplementation include("eu.pb4:polymer-blocks:0.8.2+1.20.6")
-	modImplementation include("eu.pb4:polymer-resource-pack:0.8.2+1.20.6")
-	modImplementation include("eu.pb4:polymer-virtual-entity:0.8.2+1.20.6")
-	modImplementation include("eu.pb4:factorytools:0.2.2+1.20.6")
-	modImplementation include("eu.pb4:sgui:1.5.1+1.20.5")
+	modImplementation include("eu.pb4:polymer-core:0.9.18+1.21.1")
+	modImplementation include("eu.pb4:polymer-blocks:0.9.18+1.21.1")
+	modImplementation include("eu.pb4:polymer-resource-pack:0.9.18+1.21.1")
+	modImplementation include("eu.pb4:polymer-virtual-entity:0.9.18+1.21.1")
+	modImplementation include("eu.pb4:factorytools:0.3.2+1.21")
+	modImplementation include("eu.pb4:sgui:1.6.1+1.21.1")
 }
 
 processResources {

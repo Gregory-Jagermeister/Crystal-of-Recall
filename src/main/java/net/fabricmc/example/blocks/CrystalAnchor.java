@@ -1,30 +1,51 @@
 package net.fabricmc.example.blocks;
 
+import com.mojang.serialization.MapCodec;
 import eu.pb4.polymer.blocks.api.BlockModelType;
 import eu.pb4.polymer.blocks.api.PolymerBlockModel;
 import eu.pb4.polymer.blocks.api.PolymerBlockResourceUtils;
 import eu.pb4.polymer.blocks.api.PolymerTexturedBlock;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockState;
+import eu.pb4.polymer.core.api.block.PolymerBlockUtils;
+import net.fabricmc.example.blocks.blockEntities.CrystalAnchorEntity;
+import net.fabricmc.example.blocks.blockEntities.ModBlockEntities;
+import net.minecraft.block.*;
+import net.minecraft.block.entity.BlockEntity;
+import net.minecraft.block.entity.BlockEntityTicker;
+import net.minecraft.block.entity.BlockEntityType;
+import net.minecraft.component.Component;
+import net.minecraft.component.ComponentType;
+import net.minecraft.component.DataComponentTypes;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Item;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.s2c.play.ParticleS2CPacket;
 import net.minecraft.particle.ParticleTypes;
 import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.Text;
+import net.minecraft.util.ActionResult;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.MathHelper;
 import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.random.LocalRandom;
 import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
+import org.jetbrains.annotations.Nullable;
 
-public class CrystalAnchor extends Block implements PolymerTexturedBlock {
+import java.util.Objects;
+
+public class CrystalAnchor extends BlockWithEntity implements PolymerTexturedBlock {
 
     private final BlockState polymerBlockState;
 
-    public CrystalAnchor(Settings settings, String modelID) {
+    public CrystalAnchor(Settings settings) {
         super(settings);
 
         this.polymerBlockState = PolymerBlockResourceUtils.requestBlock(BlockModelType.FULL_BLOCK,
-                PolymerBlockModel.of(new Identifier("cor", modelID)));
+                PolymerBlockModel.of(Identifier.of("cor", "block/crystal_anchor")));
     }
 
     @Override
@@ -33,50 +54,67 @@ public class CrystalAnchor extends Block implements PolymerTexturedBlock {
     }
 
     @Override
+    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+
+        if (!(world.getBlockEntity(pos) instanceof CrystalAnchorEntity crystalAnchorEntity)) {
+            return super.onUse(state, world, pos, player, hit);
+        }
+
+        Item handItem = player.getStackInHand(player.getActiveHand()).getItem();
+        if(handItem.getName().getString().contains("Crystal of Recall")){
+            if(crystalAnchorEntity.getComponents().contains(DataComponentTypes.CUSTOM_NAME)){
+                System.out.println(Objects.requireNonNull(crystalAnchorEntity.getComponents().get(DataComponentTypes.CUSTOM_NAME)).getString());
+            }else{
+                System.out.println(state.getBlock().asItem().getName().getString());
+            }
+
+
+            ServerWorld sWorld = (ServerWorld) world;
+            showTeleportationCircle(sWorld, pos);
+        }
+        return ActionResult.SUCCESS;
+    }
+
+    @Override
     public void randomDisplayTick(BlockState state, World world, BlockPos pos, Random random) {
-        System.out.println("Random display tick was called ");
-        // if (!world.isClient) {
-        // System.out.println("Hello Particles!");
-        // ServerWorld sWorld = (ServerWorld) world;
-        // showParticles(sWorld, pos, random);
-        // }
+        super.randomDisplayTick(state, world, pos, random);
 
-        for (int i = 0; i < 4; ++i) {
-            double d = (double) pos.getX() + random.nextDouble();
-            double e = (double) pos.getY() + random.nextDouble();
-            double f = (double) pos.getZ() + random.nextDouble();
-            double g = ((double) random.nextFloat() - 0.5D) * 0.5D;
-            double h = ((double) random.nextFloat() - 0.5D) * 0.5D;
-            double j = ((double) random.nextFloat() - 0.5D) * 0.5D;
-            int k = random.nextInt(2) * 2 - 1;
-            if (!world.getBlockState(pos.west()).isOf(this) && !world.getBlockState(pos.east()).isOf(this)) {
-                d = (double) pos.getX() + 0.5D + 0.25D * (double) k;
-                g = (double) (random.nextFloat() * 2.0F * (float) k);
-            } else {
-                f = (double) pos.getZ() + 0.5D + 0.25D * (double) k;
-                j = (double) (random.nextFloat() * 2.0F * (float) k);
-            }
+        System.out.println("Hello World");
 
-            world.addParticle(ParticleTypes.PORTAL, d, e, f, g, h, j);
+    }
+
+    public void showTeleportationCircle(ServerWorld world, BlockPos pos) {
+        // Loop over angles to create a circular effect
+        for (int angle = 0; angle < 360; angle += 10) {
+            double radians = Math.toRadians(angle);
+            double offsetX = Math.cos(radians);
+            double offsetZ = Math.sin(radians);
+            double x = pos.getX() + 0.5 + offsetX;
+            double y = pos.getY() + 0.5;  // Adjust this if you want the circle higher or lower
+            double z = pos.getZ() + 0.5 + offsetZ;
+
+            // Use spawnParticles to send this to all clients observing this portion of the world
+            world.spawnParticles(ParticleTypes.PORTAL, x, y, z, 1, 0.0, 0.0, 0.0, 0.0);
         }
     }
 
-    private void showParticles(ServerWorld world, BlockPos pos, Random random) {
-        for (int i = 0; i < 360; i += 20) {
-            double angle = Math.toRadians(i + (world.getTime() % 360)); // Make particles spin
-            double xOffset = 0.5D + 0.5D * MathHelper.cos((float) angle); // Spiral or circular pattern
-            double zOffset = 0.5D + 0.5D * MathHelper.sin((float) angle);
-
-            Vec3d particlePos = new Vec3d(pos.getX() + xOffset, pos.getY() + 1.5D, pos.getZ() + zOffset); // '1.5D' for
-                                                                                                          // above the
-                                                                                                          // block
-
-            ParticleS2CPacket packet = new ParticleS2CPacket(ParticleTypes.HAPPY_VILLAGER, true, particlePos.x,
-                    particlePos.y, particlePos.z, 0, 0, 0, 1, 0);
-            for (var player : world.getPlayers(p -> p.squaredDistanceTo(particlePos) < 256)) {
-                player.networkHandler.sendPacket(packet);
-            }
-        }
+    @Override
+    protected MapCodec<? extends BlockWithEntity> getCodec() {
+        return createCodec(CrystalAnchor::new);
     }
 
+    @Override
+    public @Nullable BlockEntity createBlockEntity(BlockPos pos, BlockState state) {
+        return new CrystalAnchorEntity(pos, state);
+    }
+
+    @Override
+    protected BlockRenderType getRenderType(BlockState state) {
+        return BlockRenderType.MODEL;
+    }
+
+    @Override
+    public @Nullable <T extends BlockEntity> BlockEntityTicker<T> getTicker(World world, BlockState state, BlockEntityType<T> type) {
+        return validateTicker(type, ModBlockEntities.CRYSTAL_ANCHOR_ENTITY, CrystalAnchorEntity::tick);
+    }
 }

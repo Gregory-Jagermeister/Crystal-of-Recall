@@ -44,8 +44,8 @@ public class CrystalMaterial implements ToolMaterial {
     @Override
     public TagKey<Block> getInverseTag() {
         // Assuming there is a custom block tag for the tool material
-        return TagKey.of(RegistryKey.ofRegistry(new Identifier("minecraft", "block")),
-                new Identifier("cor", "empty_tag"));
+        return TagKey.of(RegistryKey.ofRegistry(Identifier.of("minecraft", "block")),
+                Identifier.of("cor", "empty_tag"));
     }
 
 }

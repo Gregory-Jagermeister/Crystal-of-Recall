@@ -16,7 +16,7 @@ public class CrystalUpgradeItem extends Item implements PolymerItem {
 
     public CrystalUpgradeItem(Item polymerItem, Settings settings) {
         super(settings);
-        this.model = PolymerResourcePackUtils.requestModel(polymerItem, new Identifier("cor", "item/recall_upgrade"));
+        this.model = PolymerResourcePackUtils.requestModel(polymerItem, Identifier.of("cor", "item/recall_upgrade"));
     }
 
     @Override

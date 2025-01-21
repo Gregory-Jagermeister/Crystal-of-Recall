@@ -1,26 +1,29 @@
 package net.fabricmc.example.gui;
 
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
+import eu.pb4.sgui.api.elements.GuiElement;
+import eu.pb4.sgui.api.gui.SimpleGui;
+import net.minecraft.item.Items;
 import net.minecraft.screen.ScreenHandlerType;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
+import net.minecraft.util.math.BlockPos;
 
-public class CrystalAnchorScreenHandler extends ScreenHandler {
+import java.util.List;
 
-    protected CrystalAnchorScreenHandler(ScreenHandlerType<?> type, int syncId) {
-        super(type, syncId);
+public class CrystalAnchorScreenHandler extends SimpleGui {
+
+    /**
+     * Constructs a new simple container gui for the supplied player.
+     *
+     * @param type                  the screen handler that the client should display
+     * @param player                the player to server this gui to
+     * @param manipulatePlayerSlots if <code>true</code> the players inventory
+     *                              will be treated as slots of this gui
+     */
+    public CrystalAnchorScreenHandler(ServerPlayerEntity player, List<BlockPos> anchors) {
+        super(ScreenHandlerType.STONECUTTER, player, false);
+        this.setTitle(Text.literal("Anchor Selection"));
     }
 
-    @Override
-    public boolean canUse(PlayerEntity player) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'canUse'");
-    }
-
-    @Override
-    public ItemStack quickMove(PlayerEntity player, int slot) {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'quickMove'");
-    }
 
 }
