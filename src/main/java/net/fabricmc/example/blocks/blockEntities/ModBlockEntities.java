@@ -1,5 +1,6 @@
 package net.fabricmc.example.blocks.blockEntities;
 
+import eu.pb4.polymer.core.api.block.PolymerBlockUtils;
 import net.fabricmc.example.ExampleMod;
 import net.fabricmc.example.blocks.CrystalAnchor;
 import net.fabricmc.example.blocks.ModBlocks;
@@ -20,6 +21,6 @@ public class ModBlockEntities {
 
     public static final BlockEntityType<CrystalAnchorEntity> CRYSTAL_ANCHOR_ENTITY = register("crystal_anchor", CrystalAnchorEntity::new, ModBlocks.CRYSTAL_ANCHOR);
     public static void initialize(){
-
+        PolymerBlockUtils.registerBlockEntity(CRYSTAL_ANCHOR_ENTITY);
     }
 }

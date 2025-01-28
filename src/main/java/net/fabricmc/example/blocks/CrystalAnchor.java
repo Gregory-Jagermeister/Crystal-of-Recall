@@ -6,6 +6,7 @@ import eu.pb4.polymer.blocks.api.PolymerBlockModel;
 import eu.pb4.polymer.blocks.api.PolymerBlockResourceUtils;
 import eu.pb4.polymer.blocks.api.PolymerTexturedBlock;
 import eu.pb4.polymer.core.api.block.PolymerBlockUtils;
+import net.fabricmc.example.StateSaverAndLoader;
 import net.fabricmc.example.blocks.blockEntities.CrystalAnchorEntity;
 import net.fabricmc.example.blocks.blockEntities.ModBlockEntities;
 import net.minecraft.block.*;
@@ -22,6 +23,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NbtCompound;
 import net.minecraft.network.packet.s2c.play.ParticleS2CPacket;
 import net.minecraft.particle.ParticleTypes;
+import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
@@ -35,6 +37,7 @@ import net.minecraft.util.math.random.Random;
 import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashMap;
 import java.util.Objects;
 
 public class CrystalAnchor extends BlockWithEntity implements PolymerTexturedBlock {
@@ -54,25 +57,16 @@ public class CrystalAnchor extends BlockWithEntity implements PolymerTexturedBlo
     }
 
     @Override
-    public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, BlockHitResult hit) {
+    public BlockState onBreak(World world, BlockPos pos, BlockState state, PlayerEntity player) {
 
-        if (!(world.getBlockEntity(pos) instanceof CrystalAnchorEntity crystalAnchorEntity)) {
-            return super.onUse(state, world, pos, player, hit);
+        if (!world.isClient && player instanceof ServerPlayerEntity serverPlayer) {
+            // Retrieve the list of warps for the player
+            StateSaverAndLoader anchorState = StateSaverAndLoader.getServerState(serverPlayer.getServer());
+            anchorState.removePlayerAnchor(serverPlayer.getUuid(), pos);
         }
 
-        Item handItem = player.getStackInHand(player.getActiveHand()).getItem();
-        if(handItem.getName().getString().contains("Crystal of Recall")){
-            if(crystalAnchorEntity.getComponents().contains(DataComponentTypes.CUSTOM_NAME)){
-                System.out.println(Objects.requireNonNull(crystalAnchorEntity.getComponents().get(DataComponentTypes.CUSTOM_NAME)).getString());
-            }else{
-                System.out.println(state.getBlock().asItem().getName().getString());
-            }
 
-
-            ServerWorld sWorld = (ServerWorld) world;
-            showTeleportationCircle(sWorld, pos);
-        }
-        return ActionResult.SUCCESS;
+        return super.onBreak(world, pos, state, player);
     }
 
     @Override

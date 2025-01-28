@@ -1,53 +1,39 @@
 package net.fabricmc.example;
 
-import net.minecraft.entity.LivingEntity;
 import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
+import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryWrapper;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.PersistentState;
 import net.minecraft.world.PersistentStateManager;
 import net.minecraft.world.World;
 
-import java.util.HashMap;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 
 public class StateSaverAndLoader extends PersistentState {
 
-    public HashMap<UUID, PlayerData> players = new HashMap<>();
+    private HashMap<UUID, List<Anchor>> playerAnchors = new HashMap<>();
 
     public static StateSaverAndLoader createFromNbt(NbtCompound tag, RegistryWrapper.WrapperLookup regLookup){
         StateSaverAndLoader state = new StateSaverAndLoader();
-        // Load logic for other attributes...
-
-        NbtCompound playersNbt = tag.getCompound("players");
+        NbtCompound playersNbt = tag.getCompound("playerAnchors");
         playersNbt.getKeys().forEach(key -> {
-            PlayerData playerData = new PlayerData();
-            NbtCompound playerNbt = playersNbt.getCompound(key);
+            UUID uuid = UUID.fromString(key);
+            NbtCompound anchorsNbt = playersNbt.getCompound(key);
+            List<Anchor> anchors = new ArrayList<>();
 
-            // Load dirtBlocksBroken and other data...
+            anchorsNbt.getKeys().forEach(anchorKey -> {
+                NbtCompound anchorNbt = anchorsNbt.getCompound(anchorKey);
+                BlockPos pos = new BlockPos(anchorNbt.getInt("x"), anchorNbt.getInt("y"), anchorNbt.getInt("z"));
+                String blockName = anchorNbt.getString("blockName");
+                RegistryKey<World> dimension = RegistryKey.of(RegistryKey.ofRegistry(Identifier.of("world")), Identifier.of(anchorNbt.getString("dimension")));
 
-            // Load anchors
-            NbtList anchorsNbt = playerNbt.getList("anchors", NbtElement.COMPOUND_TYPE);
-            for (NbtElement element : anchorsNbt) {
-                NbtCompound anchorNbt = (NbtCompound) element;
-                BlockPos pos = new BlockPos(
-                        anchorNbt.getInt("x"),
-                        anchorNbt.getInt("y"),
-                        anchorNbt.getInt("z")
-                );
-                String name = anchorNbt.getString("name");
-                playerData.anchorPoints.add(pos);
-                playerData.anchorNames.add(name);
-            }
-
-            // Add playerData to the persistent state's players map
-            state.players.put(UUID.fromString(key), playerData);
+                anchors.add(new Anchor(pos, blockName, dimension));
+            });
+            state.playerAnchors.put(uuid, anchors);
         });
-
         return state;
     }
 
@@ -65,33 +51,44 @@ public class StateSaverAndLoader extends PersistentState {
         return state;
     }
 
-
-    public static PlayerData getPlayerState(LivingEntity player){
-        StateSaverAndLoader serverState = getServerState(Objects.requireNonNull(player.getWorld().getServer()));
-
-        return serverState.players.computeIfAbsent(player.getUuid(), uuid -> new PlayerData());
+    public void addPlayerAnchor(UUID playerId, Anchor anchor) {
+        this.playerAnchors.computeIfAbsent(playerId, k -> new ArrayList<>()).add(anchor);
+        this.markDirty();
     }
 
     @Override
     public NbtCompound writeNbt(NbtCompound nbt, RegistryWrapper.WrapperLookup registryLookup) {
+        // Save player anchors
         NbtCompound playersNbt = new NbtCompound();
-        players.forEach((uuid, playerData) -> {
-            NbtCompound playerNbt = new NbtCompound();
+        playerAnchors.forEach((uuid, anchors) -> {
+            NbtCompound anchorsNbt = new NbtCompound();
 
-            NbtList anchorsNbt = new NbtList();
-            for (int i = 0; i < playerData.anchorPoints.size(); i++) {
-                BlockPos pos = playerData.anchorPoints.get(i);
+            for (int i = 0; i < anchors.size(); i++) {
+                Anchor anchor = anchors.get(i);
                 NbtCompound anchorNbt = new NbtCompound();
-                anchorNbt.putInt("x", pos.getX());
-                anchorNbt.putInt("y", pos.getY());
-                anchorNbt.putInt("z", pos.getZ());
-                anchorNbt.putString("name", playerData.anchorNames.get(i));
-                anchorsNbt.add(anchorNbt);
+                anchorNbt.putInt("x", anchor.getPosition().getX());
+                anchorNbt.putInt("y", anchor.getPosition().getY());
+                anchorNbt.putInt("z", anchor.getPosition().getZ());
+                anchorNbt.putString("blockName", anchor.getBlockName());
+                anchorNbt.putString("dimension", anchor.getDimension().getValue().toString());
+
+                anchorsNbt.put("anchor" + i, anchorNbt);
             }
-            playerNbt.put("anchors", anchorsNbt);
-            playersNbt.put(uuid.toString(), playerNbt);
+            playersNbt.put(uuid.toString(), anchorsNbt);
         });
-        nbt.put("players", playersNbt);
+        nbt.put("playerAnchors", playersNbt);
         return nbt;
+    }
+
+    public void removePlayerAnchor(UUID uuid, BlockPos targetPos) {
+        List<Anchor> anchors = playerAnchors.get(uuid);
+        if (anchors != null) {
+            anchors.removeIf(anchor -> anchor.getPosition().equals(targetPos));
+        }
+        markDirty();
+    }
+
+    public List<Anchor> getPlayerAnchors(UUID playerId) {
+        return this.playerAnchors.getOrDefault(playerId, new ArrayList<>());
     }
 }

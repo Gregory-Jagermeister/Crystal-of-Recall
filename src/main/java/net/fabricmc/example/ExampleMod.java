@@ -54,8 +54,10 @@ public class ExampleMod implements ModInitializer {
 
 	@Override
 	public void onInitialize() {
-		PolymerResourcePackUtils.markAsRequired();
+
 		PolymerResourcePackUtils.addModAssets(MOD_ID);
+		PolymerResourcePackUtils.getInstance().setPackDescription(Text.literal("TEST REPLACED DESCRIPTION").formatted(Formatting.GREEN));
+		PolymerResourcePackUtils.markAsRequired();
 
 		// ITEMS
 		ModItems.initialize();
@@ -63,28 +65,6 @@ public class ExampleMod implements ModInitializer {
 		// BLOCKS
 		ModBlocks.initialize();
 		ModBlockEntities.initialize();
-
-		//CALLBACKS
-		UseBlockCallback.EVENT.register(((player, world, hand, hitResult) -> {
-			if (!world.isClient && player.getStackInHand(hand).getItem() == ModItems.UPGRADED_RECALL_CRYSTAL) {
-				// Example: only act on your specific block
-				if (world.getBlockState(hitResult.getBlockPos()).getBlock() == ModBlocks.CRYSTAL_ANCHOR) {
-
-					StateSaverAndLoader state = StateSaverAndLoader.getServerState(Objects.requireNonNull(world.getServer()));
-					PlayerData playerData = StateSaverAndLoader.getPlayerState(player);
-
-					playerData.anchorPoints.add(hitResult.getBlockPos());
-					playerData.anchorNames.add(world.getBlockState(hitResult.getBlockPos()).getBlock().getName().getString());
-
-					state.markDirty(); // Ensure changes are saved
-					System.out.println("Hello world");
-					return ActionResult.SUCCESS;
-				}
-			}
-			return ActionResult.PASS;
-		}));
-
-		//NETWORKING
 
 	}
 }
